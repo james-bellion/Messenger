@@ -1,104 +1,115 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// **--MongoDb , Prisma SetUp--**
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "mongodb"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
-// **Models dev Notes
-// 0.) Models : User, Account, Conversation & Message
-//
-// 1.) id that we will use in all our models 
-// 2.) id is a type of string with special decorator @id
-// 3.) defualt value of auto and map it to _id because thats whats under the hood of prisma 
-// using mongo db the ids being with an underscore _ so we map our id to that
-// 4.)  added ? optional for some due to the social log in options and you dont need them for that
-//
-// 5.) conversations Conversations[]
-//  will have a property in this user model which maps our conversation[] model as 
-// an array using the conversationsIds to refer to the id of that given conversation
-//
-// 6.) seen messages works the same way as above
-
-
-
 model User {
-  // Base info
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-  name String?
-  email String? @unique
-  emailVerified DateTime?
-  image String?
-  hashedPassword String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              Int      @id @default(autoincrement())
+  name            String?
+  email           String?  @unique
+  emailVerified   DateTime?
+  image           String?
+  hashedPassword  String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
-  // Relations properties
-  conversationIds String[] @db.ObjectId // store convos this user is apart of
-  conversations Conversation[] @relation(fields: [conversationIds], references: [id])
-
-  seenMessageIds String[] @db.ObjectId
-  seenMessages Message[] @relation("Seen", fields: [seenMessageIds], references: [id])
+  conversations Conversation[] @relation("UserConversations")
+  seenMessages  Message[] @relation("SeenMessages")
 
   accounts Account[]
   messages Message[]
 }
 
 model Account {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-  userId String @db.ObjectId
-  type String
-  provider String
+  id              Int     @id @default(autoincrement())
+  userId          Int
+  type            String
+  provider        String
   providerAccountId String
-  refresh_token String? @db.String // need the @db.String as usualy in SQL its db.Text but mongodb uses db.String
-  access_token String? @db.String
-  expires_at Int?
-  token_type String?
-  scope String?
-  id_token String? @db.String
-  session_state String?
+  refresh_token   String?
+  access_token    String?
+  expires_at      Int?
+  token_type      String?
+  scope           String?
+  id_token        String?
+  session_state   String?
 
- // mapping this user model to the Accounts > userID, refering to the User model: User > id
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-// define a rule our account model that the combination of provider & providerAccountId need to be unique
   @@unique([provider, providerAccountId])
 }
 
 model Conversation {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-  createdAt DateTime @default(now())
-  lastMessageAt DateTime @default(now())
-  name String?
-  isGroup Boolean?
+  id              Int     @id @default(autoincrement())
+  createdAt       DateTime @default(now())
+  lastMessageAt   DateTime @default(now())
+  name            String?
+  isGroup         Boolean?
 
-  messagesIds String[] @db.ObjectId
-  message Message[]
-
-  userIds String[] @db.ObjectId
-  users User[] @relation(fields: [userIds], references: [id])
+  participants User[] @relation("UserConversations")
+  messages Message[]
 }
 
 model Message {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-  body String?
-  image String?
-  createdAt DateTime @default(now())
+  id              Int     @id @default(autoincrement())
+  body            String?
+  image           String?
+  createdAt       DateTime @default(now())
 
-  seenIds String[] @db.ObjectId
-  seen User[] @relation("Seen", fields: [seenIds], references: [id])
+  seenByUsers User[] @relation("SeenMessages")
 
-  // each message needs to have a relation with the conversation
-  conversationId String @db.ObjectId
-  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  conversationId Int
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
-  senderId String @db.ObjectId
-  sender User @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  senderId       Int
+  sender         User @relation(fields: [senderId], references: [id], onDelete: Cascade)
 }
+
+
+// User Table:
+// This table stores user information.
+// Each user can have multiple conversations and seen messages.
+// Users are connected to conversations through the "UserConversations" relation.
+// Users are connected to seen messages through the "SeenMessages" relation.
+// Users can have multiple accounts and messages.
+
+// Account Table:
+// This table stores account information associated with users.
+// Each account belongs to a user.
+// The userId field connects an account to the corresponding user.
+// Accounts have attributes like type, provider, and tokens for authentication.
+
+// Conversation Table:
+// This table represents conversations between users.
+// Conversations can involve multiple participants, represented by the "participants" relation.
+// Each conversation can have multiple messages.
+// The createdAt and lastMessageAt fields track conversation timestamps.
+
+// Message Table:
+// This table stores messages exchanged in conversations.
+// Each message belongs to a conversation and a sender (user).
+// Messages can be marked as seen by multiple users, connected through the "SeenMessages" relation.
+// The conversationId field links messages to their corresponding conversation.
+// The senderId field connects messages to their sender (user).
+
+
+
+// personal notes:
+
+// 1.) run: npx prism init 
+// to get the prisma schema file
+
+//  2.)make your tables and relations
+
+// 3.) run:npx prisma db push
+// to sync your database with prisma schema & genarate prisma cliant. 
+//
+// 4.) run:
+//      npx prisma studio 
+//            to see the data localy.
+
+// do i migrate?? i didnt yet.
