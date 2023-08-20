@@ -101,7 +101,7 @@ const AuthForm = () => {
           {variant === "REGISTER" && (
             <Input
              id="name"
-             label="name"
+             label="Name"
              register={register}
              errors={errors} 
              disabled={isLoading}
@@ -155,7 +155,7 @@ const AuthForm = () => {
             </div>
             <div
               className="
-                     relitive
+                     relative
                      flex
                      justify-center
                      text-sm"
