@@ -1,5 +1,6 @@
 "use client";
 
+import axios from "axios";
 import { useCallback, useState } from "react";
 import { FieldValues, SubmitHandler, useForm } from "react-hook-form";
 
@@ -55,7 +56,7 @@ const AuthForm = () => {
     setIsLoading(true);
 
     if (variant === "REGISTER") {
-      //Axios Registor
+      axios.post("/api/register", data); // data = name, email & password api refers to '..api/register/route.ts
     }
 
     if (variant === "LOGIN") {
@@ -100,12 +101,12 @@ const AuthForm = () => {
 
           {variant === "REGISTER" && (
             <Input
-             id="name"
-             label="Name"
-             register={register}
-             errors={errors} 
-             disabled={isLoading}
-             />
+              id="name"
+              label="Name"
+              register={register}
+              errors={errors}
+              disabled={isLoading}
+            />
           )}
 
           <Input
@@ -167,21 +168,21 @@ const AuthForm = () => {
           </div>
 
           <div className="mt-6 flex gap-2">
-
             {/* social buttons  */}
-            <AuthSocialButton 
+            <AuthSocialButton
               icon={BsGithub}
-              onClick={() => socialAction('github')}
-             />
+              onClick={() => socialAction("github")}
+            />
 
-            <AuthSocialButton 
+            <AuthSocialButton
               icon={BsGoogle}
-              onClick={() => socialAction('google')}
-             />
+              onClick={() => socialAction("google")}
+            />
           </div>
         </div>
 
-        <div className="
+        <div
+          className="
          flex
          gap-2
          justify-center
@@ -189,18 +190,16 @@ const AuthForm = () => {
          mt-6
          px-2
          text-gray-500
-        ">
-            <div>
-                {variant === 'LOGIN' ? 'New to Messenger?' : 'Already have an account?'}
-            </div>
-            <div
-                onClick={toggleVariant}
-                className="underline cursor-pointer"
-                >
-                    {variant === 'LOGIN' ? 'Create an account' : 'Login'}
-
-            </div>
-
+        "
+        >
+          <div>
+            {variant === "LOGIN"
+              ? "New to Messenger?"
+              : "Already have an account?"}
+          </div>
+          <div onClick={toggleVariant} className="underline cursor-pointer">
+            {variant === "LOGIN" ? "Create an account" : "Login"}
+          </div>
         </div>
       </div>
     </div>
@@ -220,6 +219,6 @@ export default AuthForm;
 
 // Recap
 //  1.) added the actions that I need to use to sign Up:
-//    register, handleSubmit 
-// 2.) created the Input component that handels the react hook form 
+//    register, handleSubmit
+// 2.) created the Input component that handels the react hook form
 //
