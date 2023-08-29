@@ -1,12 +1,23 @@
 'use client'
 
-import { useState } from "react"
+import React, { useState } from "react"
 import useRoutes from "../hooks/useRoutes"
 import DesktopItem from "./DesktopItem"
+import { User } from "@prisma/client" // hover me to see how i am defied in prisma schema
 
-const DesktopSidebar = () => {
+import Avatar from "../Avatar"
+
+interface DesktopSidebarProps {
+    currentUser: User
+}
+
+const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
+    currentUser
+}) => {
     const routes = useRoutes()
-    const[isOpen, setIsOpen] = useState(false) // used for our model
+    const[isOpen, setIsOpen] = useState(false) // used for our model/ open the settings model
+
+    console.log({ currentUser })
 
     return (
         <div className="
@@ -52,9 +63,33 @@ const DesktopSidebar = () => {
                 
                 </ul>
             </nav>
+            <nav
+            className="
+            mt-4
+            flex
+            flex-col
+            justify-between
+            items-center
+            ">
+                <div
+                onClick={() => setIsOpen(true)}
+                className="
+                cursor-pointer
+                hover:opacity-75
+                transition
+                "
+                >
+                    <Avatar user={currentUser} />
+                    
+                </div>
+            </nav>
          
         </div>
     )
 }
 
 export default DesktopSidebar
+
+
+// npm install next-superjson-plugin
+// to fix the error: warning in terminal that we are passing date objects in the client component 

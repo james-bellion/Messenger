@@ -1,10 +1,61 @@
+"use client";
 
-// interface define href as string? 2.28.35
+import clsx from "clsx"; // used for dynamic styling include classnames and atributes
+import Link from "next/link";
 
-const DesktopItem = () => {
-    return (
-        <div>desktop Item</div>
-    )
+interface DesktopItemProps {
+  label: string;
+  icon: any;
+  href: string;
+  onClick?: () => void;
+  active?: boolean;
 }
 
-export default DesktopItem
+const DesktopItem: React.FC<DesktopItemProps> = ({
+  label,
+  icon: Icon, // remapped to capital I so i can use it as a little component
+  href,
+  onClick,
+  active,
+}) => {
+  const handleClick = () => {
+    if (onClick) {
+      return onClick();
+    }
+  };
+
+  return (
+    <li onClick={handleClick}>
+      <Link
+        href={href}
+        className={clsx(`
+                group
+                flex
+                gap-x-3
+                rounded-md
+                p-3
+                text-sm
+                leading-6
+                font-semibold
+                text-gray-500
+                hover:text-black
+                hover:bg-gray-100
+             `,
+          active && 'bg-gray-100 text-black' // conditional is active
+        )}
+      >
+        <Icon className="h-6 w-6 shrink-0" />
+        <span className="sr-only">{label}</span>
+      </Link>
+    </li>
+  );
+};
+
+export default DesktopItem;
+
+// debug active working for text-black ?
+
+// dev notes:
+//  <span className="sr-only">{label}</span> hide this span and leave it only in the server side
+// hiding it on the client but showing on the server side rendering. improves Seo as the navigation will have the name
+
