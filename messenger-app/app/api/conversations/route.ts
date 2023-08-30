@@ -1,3 +1,125 @@
+import getCurrentUser from "@/app/actions/getCurrentUser";
+import { NextResponse } from "next/server";
+import prisma from "@/app/libs/prismadb";
+
+// post function for this route
+
+// group chat logic
+// one-to-one conversation logic
+
+export async function POST(request: Request) {
+  try {
+    // first get the current user
+    const currentUser = await getCurrentUser();
+
+    // parse our body
+    const body = await request.json();
+
+    // extract all possible values from our body
+    const {
+      userId, // 1 to one
+      isGroup, // *boolean
+      members, // for group chats we will need members
+      name, // name of the group chat
+    } = body;
+
+    // check if we have the current user
+    if (!currentUser?.id || !currentUser?.email) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    // check if we sent is group true but we have not sent members or name
+    if (isGroup && (!members || members.length < 2 || !name)) {
+      return new NextResponse("Invalid data", { status: 400 });
+    }
+
+    // code to create a group chat if isGroup is present
+    if (isGroup) {
+      const newConversation = await prisma.conversation.create({
+        data: {
+          name,
+          isGroup,
+          participants: {
+            connect: [
+              ...members.map((member: { value: string }) => ({
+                id: member.value,
+              })),
+              {
+                id: currentUser.id,
+              },
+            ],
+          },
+        },
+        include: {
+          participants: true,
+        },
+      });
+
+      // now we have the newConversation all we have to do is:
+      return NextResponse.json(newConversation);
+    }
+
+    // one-to-one convo
+    // first check if there's an existing convo with that person
+
+    const existingConversations = await prisma.conversation.findMany({
+      where: {
+        OR: [
+          {
+            participants: {
+              every: {
+                id: { in: [currentUser.id, userId] },
+              },
+            },
+          },
+        ],
+      },
+    });
+
+    // extract the only existing conversation
+    const singleConversation = existingConversations[0];
+
+    // if there is a single conversation, return it back to the user
+    if (singleConversation) {
+      return NextResponse.json(singleConversation);
+    }
+
+    // handle creating a new conversation if the existing conversation query does not exist
+    const newConversation = await prisma.conversation.create({
+      data: {
+        participants: {
+          connect: [
+            {
+              id: currentUser.id,
+            },
+            {
+              id: userId,
+            },
+          ],
+        },
+      },
+      include: {
+        participants: true,
+      },
+    });
+
+    return NextResponse.json(newConversation);
+  } catch (error: any) {
+    return new NextResponse("Internal Error in conversation route", {
+      status: 500,
+    });
+  }
+}
+
+
+
+
+// dev notes:
+// sorry for all the comments 
+// had lots of errors with user and userId. changed to participants and fixed for now,
+// a conversation has been added to the database when clicking on a user in the UI
+
+// for refference this is my old code maybe i missed something else will see later:
 // import getCurrentUser from "@/app/actions/getCurrentUser";
 // import { NextResponse } from "next/server";
 
@@ -119,7 +241,6 @@
 //       return NextResponse.json(singleConversation);
 //     }
 
-// }
 //     // handel creating a new conversation if the existing conversation query does not exist
 //     const newConversation = await prisma.conversation.create({
 //       data: {
@@ -149,119 +270,5 @@
 //       status: 500,
 //     });
 //   }
-
-
-
-import getCurrentUser from "@/app/actions/getCurrentUser";
-import { NextResponse } from "next/server";
-import prisma from "@/app/libs/prismadb";
-
-// post function for this route
-
-// group chat logic
-// one-to-one conversation logic
-
-export async function POST(request: Request) {
-  try {
-    // first get the current user
-    const currentUser = await getCurrentUser();
-
-    // parse our body
-    const body = await request.json();
-
-    // extract all possible values from our body
-    const {
-      userId, // 1 to one
-      isGroup, // *boolean
-      members, // for group chats we will need members
-      name, // name of the group chat
-    } = body;
-
-    // check if we have the current user
-    if (!currentUser?.id || !currentUser?.email) {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
-
-    // check if we sent is group true but we have not sent members or name
-    if (isGroup && (!members || members.length < 2 || !name)) {
-      return new NextResponse("Invalid data", { status: 400 });
-    }
-
-    // code to create a group chat if isGroup is present
-    if (isGroup) {
-      const newConversation = await prisma.conversation.create({
-        data: {
-          name,
-          isGroup,
-          participants: {
-            connect: [
-              ...members.map((member: { value: string }) => ({
-                id: member.value,
-              })),
-              {
-                id: currentUser.id,
-              },
-            ],
-          },
-        },
-        include: {
-          participants: true,
-        },
-      });
-
-      // now we have the newConversation all we have to do is:
-      return NextResponse.json(newConversation);
-    }
-
-    // one-to-one convo
-    // first check if there's an existing convo with that person
-
-    const existingConversations = await prisma.conversation.findMany({
-      where: {
-        OR: [
-          {
-            participants: {
-              every: {
-                id: { in: [currentUser.id, userId] },
-              },
-            },
-          },
-        ],
-      },
-    });
-
-    // extract the only existing conversation
-    const singleConversation = existingConversations[0];
-
-    // if there is a single conversation, return it back to the user
-    if (singleConversation) {
-      return NextResponse.json(singleConversation);
-    }
-
-    // handle creating a new conversation if the existing conversation query does not exist
-    const newConversation = await prisma.conversation.create({
-      data: {
-        participants: {
-          connect: [
-            {
-              id: currentUser.id,
-            },
-            {
-              id: userId,
-            },
-          ],
-        },
-      },
-      include: {
-        participants: true,
-      },
-    });
-
-    return NextResponse.json(newConversation);
-  } catch (error: any) {
-    return new NextResponse("Internal Error in conversation route", {
-      status: 500,
-    });
-  }
-}
+// }
 
